@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Food Ranking</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #333; }
+    .container { max-width: 1100px; margin: auto; padding: 1em; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { margin-top: 0; font-size: 1.8em; }
+    .filters { display: flex; gap: 0.8em; margin: 1em 0; flex-wrap: wrap; }
+    .filters input, .filters select { flex: 1 1 200px; padding: 0.6em; border: 1px solid #ccc; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; overflow-x: auto; margin-top: 1em; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; white-space: nowrap; text-align: left; }
+    th { background: #e9ecef; position: sticky; top: 0; }
+    tr:nth-child(even) { background: #fafafa; }
+    .high { background: #d4edda; }
+    .medium { background: #fff3cd; }
+    .low { background: #f8d7da; }
+    @media(max-width:600px) { th,td { padding:6px; font-size:0.8em; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Food Ranking</h1>
+    <div class="filters">
+      <input type="text" id="search" placeholder="Search foods…">
+      <select id="category-filter">
+        <option value="">All categories</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="table">
+        <thead>
+          <tr><th>Food</th><th>Category</th><th>Bryan Johnson</th><th>David Sinclair</th><th>Huberman</th><th>Mediterranean Diet</th><th>Keto Diet</th><th>MIND diet</th><th>Paleo Diet</th><th>Vegan Diet</th><th>Atkins Diet</th><th>Gluten-Free Diet</th><th>Vegetarian Diet</th><th>Flexitarian Diet</th><th>Autoimmune Protocol Diet</th><th>Blue Zone Diet</th><th>Longevity</th><th>Brain health (MIND)</th><th>Alzheimer prevention</th><th>Muscle building</th><th>Low Glycemic / Insulin Impact</th><th>Contaminant / Toxicity Risk</th><th>Comments</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <script>
+    let data = [];
+    Papa.parse('data.csv', {
+      download: true,
+      header: true,
+      dynamicTyping: true,
+      complete: function(results) {
+        data = results.data;
+        initFilters();
+        render();
+      }
+    });
+    const cols = ['Food', 'Category', 'Bryan Johnson', 'David Sinclair', 'Huberman', 'Mediterranean Diet', 'Keto Diet', 'MIND diet', 'Paleo Diet', 'Vegan Diet', 'Atkins Diet', 'Gluten-Free Diet', 'Vegetarian Diet', 'Flexitarian Diet', 'Autoimmune Protocol Diet', 'Blue Zone Diet', 'Longevity', 'Brain health (MIND)', 'Alzheimer prevention', 'Muscle building', 'Low Glycemic / Insulin Impact', 'Contaminant / Toxicity Risk', 'Comments'];
+    document.getElementById('search').oninput = render;
+    function initFilters() {
+      const sel = document.getElementById('category-filter');
+      Array.from(new Set(data.map(x=>x.Category))).sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        sel.appendChild(opt);
+      });
+      sel.onchange = render;
+    }
+    function render() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const cat = document.getElementById('category-filter').value;
+      const tbody = document.querySelector('#table tbody');
+      tbody.innerHTML = '';
+      data
+        .filter(i => (!cat||i.Category===cat) && (!q||i.Food.toLowerCase().includes(q)))
+        .forEach(i => {
+          const tr = document.createElement('tr');
+          const score = i['Overall Score'] || '';
+          const cls = score >= 7 ? 'high' : score >= 4 ? 'medium' : 'low';
+          let html = cols.map(col => {
+            if (col==='Overall Score') return `<td class="${cls}">${score.toFixed(2)}</td>`;
+            else return `<td>${i[col]||''}</td>`;
+          }).join('');
+          tr.innerHTML = html;
+          tbody.appendChild(tr);
+        });
+    }
+  </script>
+</body>
+</html>
