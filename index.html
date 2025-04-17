@@ -4,7 +4,8 @@
 <title>Food Ranking</title><style>
 body{font-family:sans-serif;margin:0;padding:0;background:#f0f2f5;color:#333}
 .container{max-width:1100px;margin:auto;padding:1em;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-h1{margin-top:0;font-size:1.8em}.section{margin:1.5em 0}.section h2{margin-bottom:0.5em;font-size:1.2em;color:#444}
+h1{margin-top:0;font-size:1.8em}
+.section{margin:1.5em 0}.section h2{margin-bottom:0.5em;font-size:1.2em;color:#444}
 .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.8em}
 .slider{background:#fafafa;padding:0.8em;border-radius:4px}.slider label{font-weight:500;display:block;margin-bottom:0.4em}
 .slider input{width:100%}.filters{display:flex;gap:0.8em;margin:1em 0;flex-wrap:wrap}
@@ -19,7 +20,10 @@ th{background:#e9ecef;position:sticky;top:0}.high{background:#d4edda}.medium{bac
 <div class="section"><h2>Are there any experts you would like to mimic?</h2><div class="controls" id="expert-sliders"></div></div>
 <div class="section"><h2>Are there any specific diets you would like to focus on?</h2><div class="controls" id="diet-sliders"></div></div>
 <div class="filters"><input type="text" id="search" placeholder="Search foods…"><select id="category-filter"><option value="">All categories</option></select></div>
-<div style="overflow-x:auto"><table id="table"><thead><tr><th>Food</th><th>Category</th><th>Bryan Johnson</th><th>David Sinclair</th><th>Huberman</th><th>Mediterranean Diet</th><th>Keto Diet</th><th>MIND diet</th><th>Paleo Diet</th><th>Vegan Diet</th><th>Atkins Diet</th><th>Gluten-Free Diet</th><th>Vegetarian Diet</th><th>Flexitarian Diet</th><th>Autoimmune Protocol Diet</th><th>Blue Zone Diet</th><th>Longevity</th><th>Brain health (MIND)</th><th>Alzheimer prevention</th><th>Muscle building</th><th>Low Glycemic / Insulin Impact</th><th>Contaminant / Toxicity Risk</th><th>Your Score</th><th>Comments</th></tr></thead><tbody></tbody></table></div></div>
+<div style="overflow-x:auto"><table id="table"><thead><tr>
+  <th>Your Score</th><th>Food</th><th>Category</th>
+<th>Bryan Johnson</th><th>David Sinclair</th><th>Huberman</th><th>Mediterranean Diet</th><th>Keto Diet</th><th>MIND diet</th><th>Paleo Diet</th><th>Vegan Diet</th><th>Atkins Diet</th><th>Gluten-Free Diet</th><th>Vegetarian Diet</th><th>Flexitarian Diet</th><th>Autoimmune Protocol Diet</th><th>Blue Zone Diet</th><th>Longevity</th><th>Brain health (MIND)</th><th>Alzheimer prevention</th><th>Muscle building</th><th>Low Glycemic / Insulin Impact</th><th>Contaminant / Toxicity Risk</th><th>Comments</th></tr></thead><tbody></tbody></table></div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 <script>
 const experts = ["Bryan Johnson", "David Sinclair", "Huberman"];
@@ -27,19 +31,19 @@ const diets = ["Mediterranean Diet", "Keto Diet", "MIND diet", "Paleo Diet", "Ve
 const goals = ["Longevity", "Brain health (MIND)", "Alzheimer prevention", "Muscle building"];
 const factors = ["Low Glycemic / Insulin Impact", "Contaminant / Toxicity Risk"];
 let data = [], weights = {};
-[...experts,...diets,...goals,...factors].forEach(k=>weights[k]=5);
+[...experts,...diets,...goals,...factors].forEach(k => weights[k]=5);
 
 function makeSliders(id,list){
   const cont = document.getElementById(id);
   list.forEach(label => {
     const key = label.replace(/\W+/g,'-');
-    const div = document.createElement('div'); div.className='slider';
-    div.innerHTML = `<label for="${key}">${label} <span id="${key}-val">5</span></label>
+    const d = document.createElement('div'); d.className='slider';
+    d.innerHTML = `<label for="${key}">${label} <span id="${key}-val">5</span></label>
       <input type="range" id="${key}" min="1" max="10" step="1" value="5">`;
-    cont.appendChild(div);
-    div.querySelector('input').oninput = e => {
+    cont.appendChild(d);
+    d.querySelector('input').oninput = e => {
       weights[label] = +e.target.value;
-      document.getElementById(key+'-val').textContent = e.target.value;
+      document.getElementById(key+'-val').textContent=e.target.value;
       renderTable();
     };
   });
@@ -48,41 +52,41 @@ function makeSliders(id,list){
 function initFilters(){
   const sel = document.getElementById('category-filter');
   Array.from(new Set(data.map(x=>x.Category))).sort().forEach(c=>{
-    const opt = document.createElement('option'); opt.value=c; opt.textContent=c; sel.appendChild(opt);
+    const o=document.createElement('option');o.value=c; o.textContent=c; sel.appendChild(o);
   });
   sel.onchange = renderTable;
   document.getElementById('search').oninput = renderTable;
 }
 
 function renderTable(){
-  const tbody = document.querySelector('#table tbody');
-  tbody.innerHTML = '';
-  const q = document.getElementById('search').value.toLowerCase();
-  const cat = document.getElementById('category-filter').value;
-  const total = Object.values(weights).reduce((a,b)=>a+b,0)||1;
-  data.map(item=>{ let sum=0; for(const k in weights) sum+=(item[k]||0)*weights[k]; item._score=sum/total; return item; })
-      .filter(i=>(!cat||i.Category===cat)&&(!q||i.Food.toLowerCase().includes(q)))
+  const tbody=document.querySelector('#table tbody');
+  tbody.innerHTML='';
+  const q=document.getElementById('search').value.toLowerCase();
+  const cat=document.getElementById('category-filter').value;
+  const total=Object.values(weights).reduce((a,b)=>a+b,0)||1;
+  data.map(i=>{let sum=0;for(const k in weights) sum+=(i[k]||0)*weights[k]; i._score=sum/total; return i;});
+  data.filter(i=>(!cat||i.Category===cat)&&(!q||i.Food.toLowerCase().includes(q)))
       .sort((a,b)=>b._score-a._score)
       .forEach(i=>{
         const tr=document.createElement('tr');
-        let html = `<td>${i.Food}</td><td>${i.Category}</td>`;
-        [...experts,...diets,...goals,...factors].forEach(c=>html+=`<td>${i[c]||''}</td>`);
-        const cls = i._score>=7?'high':i._score>=4?'medium':'low';
-        html+=`<td class="${cls}">${i._score.toFixed(2)}</td><td>${i.Comments}</td>`;
-        tr.innerHTML = html; tbody.appendChild(tr);
+        const cls=i._score>=7?'high':i._score>=4?'medium':'low';
+        let row=`<td class="${cls}">${i._score.toFixed(2)}</td><td>${i.Food}</td><td>${i.Category}</td>`;
+        [...experts,...diets,...goals,...factors,...["Comments"]].forEach(c=>row+=`<td>${i[c]||''}</td>`);
+        tr.innerHTML=row;tbody.appendChild(tr);
       });
 }
 
-Papa.parse('data.csv', {
-  download: true, header: true, dynamicTyping: true,
-  complete: res => {
-    data = res.data;
-    makeSliders('goal-sliders', goals);
-    makeSliders('factor-sliders', factors);
-    makeSliders('expert-sliders', experts);
-    makeSliders('diet-sliders', diets);
+Papa.parse('data_updated.csv', {
+  download:true, header:true, dynamicTyping:true,
+  complete:res=>{
+    data=res.data;
+    makeSliders('goal-sliders',goals);
+    makeSliders('factor-sliders',factors);
+    makeSliders('expert-sliders',experts);
+    makeSliders('diet-sliders',diets);
     initFilters();
     renderTable();
   }
 });
 </script>
+</body></html>
